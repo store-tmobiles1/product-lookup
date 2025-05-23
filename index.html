@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Product Catalog - Multi Excel View</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     html, body {
       margin: 0;
@@ -29,16 +29,35 @@
       display: flex;
       flex-direction: column;
       transition: width 0.3s ease;
-      position: relative;
     }
 
-    /* Toggle button */
+    /* Collapsed sidebar */
+    .sidebar-collapsed .sidebar {
+      width: 0;
+      padding: 15px 0;
+      overflow: hidden;
+    }
+
+    /* Sidebar toggle button */
     .sidebar-toggle {
       display: none;
       cursor: pointer;
-      font-size: 24px;
+      font-size: 28px;
       user-select: none;
-      margin-bottom: 10px;
+      padding: 5px 10px;
+      background: #E20074;
+      color: white;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 9999;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: background-color 0.3s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background-color: #b60059;
     }
 
     /* Tabs */
@@ -69,6 +88,7 @@
       font-weight: bold;
       margin: 10px 0 5px;
       color: #555;
+      user-select: none;
     }
 
     /* Main content */
@@ -78,49 +98,77 @@
       flex-direction: column;
       overflow: hidden;
       transition: margin-left 0.3s ease;
+      margin-left: 220px;
     }
 
-    .main-header {
-      padding: 15px;
+    /* When sidebar collapsed, main uses full width */
+    .sidebar-collapsed .main {
+      margin-left: 0;
+    }
+
+    /* Top banner */
+    header.top-banner {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
       background-color: #E20074;
       color: white;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      user-select: none;
     }
 
-    .main-header input[type="text"], .main-header button {
+    .top-banner .logo {
+      height: 32px;
+      margin-right: 10px;
+      object-fit: contain;
+    }
+
+    .top-banner .logo-fallback {
+      font-size: 28px;
+      margin-right: 10px;
+      display: none;
+    }
+
+    .top-banner h1 {
+      font-size: 20px;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    /* Header with search */
+    .main-header {
+      padding: 15px;
+      background-color: #fafafa;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .main-header input[type="text"],
+    .main-header button {
       width: 100%;
+      margin-bottom: 10px;
       padding: 10px;
       font-size: 16px;
       box-sizing: border-box;
-      border: none;
+      border: 1px solid #ccc;
       border-radius: 4px;
     }
 
-    .main-header input[type="text"] {
-      border: 1px solid #ccc;
-      color: #333;
-    }
-
     .main-header button {
-      background-color: white;
-      color: #E20074;
-      font-weight: bold;
+      background-color: #4285f4;
+      color: white;
+      border: none;
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
 
     .main-header button:hover {
-      background-color: #f0f0f0;
+      background-color: #3367d6;
     }
 
+    /* Content */
     .content {
       flex: 1;
       overflow: auto;
       padding: 15px;
-      background: #fff;
     }
 
     table {
@@ -135,6 +183,7 @@
       border: 1px solid #ccc;
       text-align: left;
       word-wrap: break-word;
+      user-select: text;
     }
 
     th {
@@ -152,71 +201,57 @@
       font-style: italic;
     }
 
-    /* COLLAPSED SIDEBAR STYLE */
-    .app.sidebar-collapsed .sidebar {
-      width: 0;
-      padding: 0;
-      overflow: hidden;
-      border: none;
-    }
-
-    .app.sidebar-collapsed .main {
-      margin-left: 0;
-    }
-
-    /* RESPONSIVE: Show toggle on small screens */
+    /* Responsive adjustments */
     @media (max-width: 768px) {
       .sidebar-toggle {
         display: block;
       }
-      /* Sidebar collapsed by default on mobile */
-      .app:not(.sidebar-collapsed) .main {
-        margin-left: 220px;
+
+      /* Sidebar is collapsed by default on mobile */
+      .app {
+        /* Start collapsed on mobile */
       }
-      .app.sidebar-collapsed .main {
+
+      .sidebar {
+        position: fixed;
+        height: 100vh;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        background-color: #f4f4f4;
+        border-right: 1px solid #ddd;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      }
+
+      .sidebar-collapsed .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar-collapsed .main {
         margin-left: 0;
       }
-    }
 
-    /* Top Banner */
-    header.top-banner {
-      background-color: #E20074;
-      color: white;
-      display: flex;
-      align-items: center;
-      padding: 10px 15px;
-      gap: 10px;
-      user-select: none;
-      cursor: default;
-    }
+      .sidebar:not(.sidebar-collapsed) {
+        transform: translateX(0);
+        transition: transform 0.3s ease;
+      }
 
-    header.top-banner .logo {
-      height: 32px;
-      width: 32px;
-      object-fit: contain;
-    }
-
-    header.top-banner .logo-fallback {
-      font-size: 28px;
-      display: none;
-    }
-
-    header.top-banner h1 {
-      margin: 0;
-      font-size: 1.3rem;
-      font-weight: 700;
-      user-select: none;
+      .main {
+        margin-left: 0 !important;
+      }
     }
   </style>
 </head>
 <body>
 
-<div class="app sidebar-collapsed"> <!-- collapsed by default on mobile -->
-  <div class="sidebar">
-    <div class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">☰</div>
+<div class="app sidebar-collapsed" id="app">
+  <!-- Sidebar Toggle Button -->
+  <div class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">☰</div>
 
+  <div class="sidebar" id="sidebar">
     <header class="top-banner">
-      <img src="logo.png" alt="TMOBILES Logo" class="logo" 
+      <img src="logo.png" alt="TMOBILES Logo" class="logo"
            onerror="this.style.display='none'; document.getElementById('fallback').style.display='inline-block';">
       <span id="fallback" class="logo-fallback">📱</span>
       <h1>TMOBILES Store</h1>
@@ -247,19 +282,24 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+  const app = document.getElementById('app');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('sidebar');
+  const homeTab = document.getElementById('homeTab');
+  const sheetTabsContainer = document.getElementById('sheetTabs');
+  const searchInput = document.getElementById('searchInput');
+
   let allSheets = {};
   let currentData = [];
   let activeTab = "__HOME__";
 
-  const appEl = document.querySelector('.app');
-  const sidebarToggleBtn = document.getElementById('sidebarToggle');
-
-  sidebarToggleBtn.addEventListener('click', () => {
-    appEl.classList.toggle('sidebar-collapsed');
+  // Toggle sidebar visibility
+  sidebarToggle.addEventListener('click', () => {
+    app.classList.toggle('sidebar-collapsed');
   });
 
-  // Setup home tab click
-  document.getElementById("homeTab").addEventListener("click", () => {
+  // Home tab click
+  homeTab.addEventListener('click', () => {
     setActiveTab("__HOME__");
   });
 
@@ -295,23 +335,20 @@
     Promise.all(readerPromises).then(() => {
       generateSheetTabs(Object.keys(allSheets));
       setActiveTab("__HOME__");
-      // Auto open sidebar when new files loaded
-      if (window.innerWidth <= 768) {
-        appEl.classList.remove('sidebar-collapsed');
-      }
+      // Automatically open sidebar when files loaded (especially on mobile)
+      app.classList.remove('sidebar-collapsed');
     });
   });
 
   function generateSheetTabs(tabNames) {
-    const tabContainer = document.getElementById('sheetTabs');
-    tabContainer.innerHTML = '';
+    sheetTabsContainer.innerHTML = '';
     tabNames.forEach(name => {
       const tab = document.createElement('div');
       tab.className = 'tab';
       tab.textContent = name;
       tab.dataset.tab = name;
       tab.onclick = () => setActiveTab(name);
-      tabContainer.appendChild(tab);
+      sheetTabsContainer.appendChild(tab);
     });
   }
 
@@ -322,7 +359,7 @@
       tab.classList.toggle('active', tab.dataset.tab === name);
     });
 
-    document.getElementById('searchInput').value = '';
+    searchInput.value = '';
 
     if (name === '__HOME__') {
       currentData = Object.values(allSheets).flat();
@@ -333,15 +370,15 @@
     renderTable(currentData);
   }
 
-  document.getElementById('searchInput').addEventListener('input', filterAndRender);
+  searchInput.addEventListener('input', filterAndRender);
 
   function resetSearch() {
-    document.getElementById('searchInput').value = '';
+    searchInput.value = '';
     renderTable(currentData);
   }
 
   function filterAndRender() {
-    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    const query = searchInput.value.trim().toLowerCase();
     const filtered = currentData.filter(row =>
       Object.values(row).some(val =>
         (val || '').toString().toLowerCase().includes(query)
