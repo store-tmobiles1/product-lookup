@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Catalog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    input[type="file"],
+    input[type="text"],
+    button {
+      padding: 10px;
+      margin-bottom: 20px;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      min-width: 600px;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+      word-wrap: break-word;
+      cursor: pointer;
+    }
+
+    th:first-child,
+    td:first-child {
+      background-color: #f0f8ff;
+      font-weight: bold;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    td.price-cell {
+      color: green;
+      font-weight: bold;
+    }
+
+    tr.no-results td {
+      text-align: center;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Product Catalog</h2>
+  <input type="file" id="csvFile" accept=".csv" />
+  <input type="text" id="searchInput" placeholder="Search products..." autocomplete="off" />
+  <button onclick="resetSearch()">Reset Search</button>
+
+  <div class="table-container">
+    <table id="productTable" style="display: none;">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script>
+    let allProducts = [];
+
+    document.getElementById('csvFile').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function (results) {
+          allProducts = results.data;
+          renderTable(allProducts);
+        }
+      });
+    });
+
+    document.getElementById('searchInput').addEventListener('input', function () {
+      filterAndRender();
+    });
+
+    function resetSearch() {
+      document.getElementById('searchInput').value = '';
+      renderTable(allProducts);
+    }
+
+    function filterAndRender() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+      const filtered = allProducts.filter(product =>
+        Object.values(product).some(value =>
+          (value || '').toString().toLowerCase().includes(query)
+        )
+      );
+
+      const isMobileSearch = query.includes("mobile");
+      const mobileFiltered = isMobileSearch
+        ? filtered.filter(product =>
+            Object.values(product).some(value =>
+              (value || '').toLowerCase().includes("mobile")
+            )
+          )
+        : filtered;
+
+      renderTable(mobileFiltered);
+    }
+
+    function renderTable(data) {
+      const table = document.getElementById('productTable');
+      const thead = document.getElementById('tableHead');
+      const tbody = document.getElementById('tableBody');
+
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+      table.style.display = 'table';
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr class="no-results"><td colspan="100%">No matching results</td></tr>';
+        return;
+      }
+
+      const headers = Object.keys(data[0]);
+
+      const headerRow = document.createElement('tr');
+      headers.forEach((header, i) => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        th.dataset.index = i;
+        th.addEventListener('click', () => sortTableByColumn(data, header));
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        headers.forEach(header => {
+          const td = document.createElement('td');
+          td.textContent = row[header] || '';
+
+          // Highlight price-like fields
+          if (/price|cost|amount/i.test(header)) {
+            td.classList.add('price-cell');
+          }
+
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    function sortTableByColumn(data, columnKey) {
+      const sorted = [...data].sort((a, b) => {
+        const valA = (a[columnKey] || '').toString().toLowerCase();
+        const valB = (b[columnKey] || '').toString().toLowerCase();
+
+        // Try numeric sort if possible
+        const numA = parseFloat(valA.replace(/[^\d.-]/g, ''));
+        const numB = parseFloat(valB.replace(/[^\d.-]/g, ''));
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return numA - numB;
+        }
+
+        return valA.localeCompare(valB);
+      });
+
+      renderTable(sorted);
+    }
+  </script>
+
+</body>
+</html>
