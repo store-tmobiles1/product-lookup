@@ -1,29 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Product Catalog</title>
+  <meta charset="UTF-8" />
+  <title>Product Catalog - Multi Excel View</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
+    html, body {
+      margin: 0;
+      height: 100%;
       font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 1000px;
-      margin: auto;
     }
 
-    input[type="file"],
-    input[type="text"],
-    button {
-      padding: 10px;
-      margin-bottom: 20px;
-      width: 100%;
+    .app {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: #f4f4f4;
+      border-right: 1px solid #ddd;
+      padding: 15px;
       box-sizing: border-box;
-      font-size: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
 
-    .table-container {
-      overflow-x: auto;
+    .sidebar input[type="file"] {
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    .tab {
+      padding: 10px 15px;
+      margin-bottom: 5px;
+      background-color: #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .tab:hover {
+      background-color: #ccc;
+    }
+
+    .tab.active {
+      background-color: #4285f4;
+      color: white;
+      font-weight: bold;
+      border-left: 5px solid #1a73e8;
+    }
+
+    .tab-section-title {
+      font-weight: bold;
+      margin: 10px 0 5px;
+      color: #555;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .main-header {
+      padding: 15px;
+      background-color: #fafafa;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .main-header input[type="text"], .main-header button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    .content {
+      flex: 1;
+      overflow: auto;
+      padding: 15px;
     }
 
     table {
@@ -38,17 +98,11 @@
       border: 1px solid #ccc;
       text-align: left;
       word-wrap: break-word;
-      cursor: pointer;
-    }
-
-    th:first-child,
-    td:first-child {
-      background-color: #f0f8ff;
-      font-weight: bold;
     }
 
     th {
       background-color: #f2f2f2;
+      cursor: pointer;
     }
 
     td.price-cell {
@@ -64,127 +118,176 @@
 </head>
 <body>
 
-  <h2>Product Catalog</h2>
-  <input type="file" id="csvFile" accept=".csv" />
-  <input type="text" id="searchInput" placeholder="Search products..." autocomplete="off" />
-  <button onclick="resetSearch()">Reset Search</button>
+<div class="app">
+  <div class="sidebar">
+    <input type="file" id="excelFile" accept=".xlsx" multiple />
 
-  <div class="table-container">
-    <table id="productTable" style="display: none;">
-      <thead id="tableHead"></thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+    <div class="tab-section-title">Navigation</div>
+    <div id="homeTab" class="tab active" data-tab="__HOME__">🏠 Home</div>
+
+    <div class="tab-section-title">Sheets</div>
+    <div id="sheetTabs"></div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script>
-    let allProducts = [];
+  <div class="main">
+    <div class="main-header">
+      <input type="text" id="searchInput" placeholder="Search products..." />
+      <button onclick="resetSearch()">Reset Search</button>
+    </div>
+    <div class="content">
+      <table id="productTable" style="display: none;">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-    document.getElementById('csvFile').addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      if (!file) return;
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  let allSheets = {};
+  let currentData = [];
+  let activeTab = "__HOME__";
 
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function (results) {
-          allProducts = results.data;
-          renderTable(allProducts);
-        }
+  // Setup home tab click
+  document.getElementById("homeTab").addEventListener("click", () => {
+    setActiveTab("__HOME__");
+  });
+
+  document.getElementById('excelFile').addEventListener('change', function (e) {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    allSheets = {};
+    let sheetIndex = 1;
+
+    const readerPromises = files.map(file => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const workbook = XLSX.read(event.target.result, { type: 'binary' });
+
+          workbook.SheetNames.forEach(sheetName => {
+            const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+            let displayName = sheetName;
+            while (allSheets.hasOwnProperty(displayName)) {
+              displayName = `${sheetName} (${sheetIndex++})`;
+            }
+            allSheets[displayName] = data;
+          });
+
+          resolve();
+        };
+        reader.onerror = reject;
+        reader.readAsBinaryString(file);
       });
     });
 
-    document.getElementById('searchInput').addEventListener('input', function () {
-      filterAndRender();
+    Promise.all(readerPromises).then(() => {
+      generateSheetTabs(Object.keys(allSheets));
+      setActiveTab("__HOME__");
+    });
+  });
+
+  function generateSheetTabs(tabNames) {
+    const tabContainer = document.getElementById('sheetTabs');
+    tabContainer.innerHTML = '';
+    tabNames.forEach(name => {
+      const tab = document.createElement('div');
+      tab.className = 'tab';
+      tab.textContent = name;
+      tab.dataset.tab = name;
+      tab.onclick = () => setActiveTab(name);
+      tabContainer.appendChild(tab);
+    });
+  }
+
+  function setActiveTab(name) {
+    activeTab = name;
+
+    document.querySelectorAll('.sidebar .tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.tab === name);
     });
 
-    function resetSearch() {
-      document.getElementById('searchInput').value = '';
-      renderTable(allProducts);
+    document.getElementById('searchInput').value = '';
+
+    if (name === '__HOME__') {
+      currentData = Object.values(allSheets).flat();
+    } else {
+      currentData = allSheets[name] || [];
     }
 
-    function filterAndRender() {
-      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    renderTable(currentData);
+  }
 
-      const filtered = allProducts.filter(product =>
-        Object.values(product).some(value =>
-          (value || '').toString().toLowerCase().includes(query)
-        )
-      );
+  document.getElementById('searchInput').addEventListener('input', filterAndRender);
 
-      const isMobileSearch = query.includes("mobile");
-      const mobileFiltered = isMobileSearch
-        ? filtered.filter(product =>
-            Object.values(product).some(value =>
-              (value || '').toLowerCase().includes("mobile")
-            )
-          )
-        : filtered;
+  function resetSearch() {
+    document.getElementById('searchInput').value = '';
+    renderTable(currentData);
+  }
 
-      renderTable(mobileFiltered);
+  function filterAndRender() {
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    const filtered = currentData.filter(row =>
+      Object.values(row).some(val =>
+        (val || '').toString().toLowerCase().includes(query)
+      )
+    );
+    renderTable(filtered);
+  }
+
+  function renderTable(data) {
+    const table = document.getElementById('productTable');
+    const thead = document.getElementById('tableHead');
+    const tbody = document.getElementById('tableBody');
+
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    table.style.display = 'table';
+
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr class="no-results"><td colspan="100%">No matching results</td></tr>';
+      return;
     }
 
-    function renderTable(data) {
-      const table = document.getElementById('productTable');
-      const thead = document.getElementById('tableHead');
-      const tbody = document.getElementById('tableBody');
+    const headers = Object.keys(data[0]);
 
-      thead.innerHTML = '';
-      tbody.innerHTML = '';
-      table.style.display = 'table';
+    const headerRow = document.createElement('tr');
+    headers.forEach(header => {
+      const th = document.createElement('th');
+      th.textContent = header;
+      th.onclick = () => sortTableByColumn(data, header);
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
 
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr class="no-results"><td colspan="100%">No matching results</td></tr>';
-        return;
-      }
-
-      const headers = Object.keys(data[0]);
-
-      const headerRow = document.createElement('tr');
-      headers.forEach((header, i) => {
-        const th = document.createElement('th');
-        th.textContent = header;
-        th.dataset.index = i;
-        th.addEventListener('click', () => sortTableByColumn(data, header));
-        headerRow.appendChild(th);
-      });
-      thead.appendChild(headerRow);
-
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        headers.forEach(header => {
-          const td = document.createElement('td');
-          td.textContent = row[header] || '';
-
-          // Highlight price-like fields
-          if (/price|cost|amount/i.test(header)) {
-            td.classList.add('price-cell');
-          }
-
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-    }
-
-    function sortTableByColumn(data, columnKey) {
-      const sorted = [...data].sort((a, b) => {
-        const valA = (a[columnKey] || '').toString().toLowerCase();
-        const valB = (b[columnKey] || '').toString().toLowerCase();
-
-        // Try numeric sort if possible
-        const numA = parseFloat(valA.replace(/[^\d.-]/g, ''));
-        const numB = parseFloat(valB.replace(/[^\d.-]/g, ''));
-        if (!isNaN(numA) && !isNaN(numB)) {
-          return numA - numB;
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      headers.forEach(header => {
+        const td = document.createElement('td');
+        td.textContent = row[header] || '';
+        if (/price|cost|amount/i.test(header)) {
+          td.classList.add('price-cell');
         }
-
-        return valA.localeCompare(valB);
+        tr.appendChild(td);
       });
+      tbody.appendChild(tr);
+    });
+  }
 
-      renderTable(sorted);
-    }
-  </script>
+  function sortTableByColumn(data, key) {
+    const sorted = [...data].sort((a, b) => {
+      const valA = (a[key] || '').toString().toLowerCase();
+      const valB = (b[key] || '').toString().toLowerCase();
+      const numA = parseFloat(valA.replace(/[^\d.-]/g, ''));
+      const numB = parseFloat(valB.replace(/[^\d.-]/g, ''));
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return valA.localeCompare(valB);
+    });
+    renderTable(sorted);
+  }
+</script>
 
 </body>
 </html>
