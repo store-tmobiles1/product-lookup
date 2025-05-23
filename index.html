@@ -2,79 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Product Catalog - Multi Excel View</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TMOBILES Store - Multi Excel View</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    /* Reset & base */
     html, body {
       margin: 0;
       height: 100%;
       font-family: Arial, sans-serif;
-      overflow: hidden;
+    }
+    button {
+      cursor: pointer;
     }
 
-    /* Top fixed banner */
+    /* Top Banner */
     header.top-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background-color: #E20074;
+      color: white;
+      padding: 10px 20px;
+      box-sizing: border-box;
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
+      right: 0;
       height: 50px;
-      background-color: #E20074;
-      color: white;
-      display: flex;
-      align-items: center;
-      padding: 0 15px;
-      box-sizing: border-box;
-      z-index: 10000;
+      z-index: 1100;
       user-select: none;
     }
-
     header.top-banner .logo {
-      height: 32px;
-      margin-right: 10px;
-      object-fit: contain;
+      height: 30px;
+      width: auto;
+      display: block;
     }
-
     header.top-banner .logo-fallback {
-      font-size: 28px;
-      margin-right: 10px;
+      font-size: 20px;
+      font-weight: bold;
       display: none;
     }
-
     header.top-banner h1 {
-      font-size: 20px;
       margin: 0;
-      white-space: nowrap;
-      flex-grow: 1;
-    }
-
-    /* Toggle button inside banner */
-    .toggle-btn {
-      background-color: #b3005a;
-      border: none;
-      color: white;
-      padding: 8px 14px;
-      font-size: 18px;
-      cursor: pointer;
-      border-radius: 4px;
+      font-size: 20px;
+      font-weight: 600;
       user-select: none;
-      margin-right: 15px;
-      transition: background-color 0.3s ease;
-    }
-    .toggle-btn:hover {
-      background-color: #8a0045;
     }
 
-    /* Layout container below banner */
+    /* Layout */
     .app {
       display: flex;
-      height: calc(100vh - 50px);
-      margin-top: 50px; /* height of banner */
+      height: 100vh;
+      padding-top: 50px; /* space for fixed header */
       overflow: hidden;
-      transition: margin-left 0.3s ease;
     }
 
-    /* Sidebar styles */
+    /* Sidebar */
     .sidebar {
       width: 220px;
       background-color: #f4f4f4;
@@ -82,22 +65,18 @@
       padding: 15px;
       box-sizing: border-box;
       overflow-y: auto;
+      transition: width 0.3s ease, transform 0.3s ease;
+      user-select: none;
+      position: relative;
       flex-shrink: 0;
-      transition: transform 0.3s ease, width 0.3s ease;
-      display: flex;
-      flex-direction: column;
     }
 
-    /* Sidebar collapsed - desktop */
+    /* Sidebar collapsed on desktop */
     .sidebar-collapsed .sidebar {
-      width: 0;
-      padding: 15px 0;
-      overflow: hidden;
-      border: none;
-      transform: translateX(-220px);
+      width: 60px;
     }
 
-    /* Tabs */
+    /* Tabs inside sidebar */
     .tab {
       padding: 10px 15px;
       margin-bottom: 5px;
@@ -108,19 +87,17 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      user-select: none;
     }
-
     .tab:hover {
       background-color: #ccc;
     }
-
     .tab.active {
       background-color: #4285f4;
       color: white;
       font-weight: bold;
       border-left: 5px solid #1a73e8;
     }
-
     .tab-section-title {
       font-weight: bold;
       margin: 10px 0 5px;
@@ -134,48 +111,63 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      transition: margin-left 0.3s ease;
     }
 
-    /* Header above content */
+    /* Adjust main margin when sidebar collapsed */
+    .sidebar-collapsed .main {
+      margin-left: 60px;
+    }
+    .sidebar-collapsed:not(.sidebar-visible) .main {
+      margin-left: 60px;
+    }
+    .sidebar-visible .main {
+      margin-left: 220px;
+    }
+
+    /* Header above table */
     .main-header {
-      padding: 10px 15px;
+      padding: 15px;
       background-color: #fafafa;
       border-bottom: 1px solid #ddd;
       display: flex;
       gap: 10px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .main-header input[type="text"] {
-      flex-grow: 1;
+      flex: 1 1 auto;
+      min-width: 200px;
       padding: 10px;
       font-size: 16px;
       box-sizing: border-box;
-      border: 1px solid #ccc;
-      border-radius: 4px;
     }
 
-    .main-header button.reset-btn {
-      background-color: #4285f4;
-      color: white;
+    .main-header button {
+      flex-shrink: 0;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #E20074;
       border: none;
-      padding: 10px 15px;
-      cursor: pointer;
+      color: white;
       border-radius: 4px;
+      user-select: none;
       transition: background-color 0.3s ease;
     }
-
-    .main-header button.reset-btn:hover {
-      background-color: #3367d6;
+    .main-header button:hover {
+      background-color: #b4005c;
     }
 
-    /* Content area */
+    /* Table container */
     .content {
       flex: 1;
       overflow: auto;
       padding: 15px;
+      box-sizing: border-box;
     }
 
+    /* Table styling */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -188,12 +180,12 @@
       border: 1px solid #ccc;
       text-align: left;
       word-wrap: break-word;
-      user-select: text;
     }
 
     th {
       background-color: #f2f2f2;
       cursor: pointer;
+      user-select: none;
     }
 
     td.price-cell {
@@ -206,11 +198,29 @@
       font-style: italic;
     }
 
-    /* Responsive adjustments */
+    /* Toggle button - top left */
+    .toggle-btn {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1200;
+      background: #E20074;
+      border: none;
+      color: white;
+      font-size: 24px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: background-color 0.3s ease;
+    }
+    .toggle-btn:hover {
+      background-color: #b4005c;
+    }
+
+    /* Mobile responsive */
     @media (max-width: 768px) {
-      .app {
-        position: relative;
-      }
       .sidebar {
         position: fixed;
         top: 50px;
@@ -218,21 +228,28 @@
         height: calc(100vh - 50px);
         width: 220px;
         z-index: 1000;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.15);
         background-color: #f4f4f4;
         border-right: 1px solid #ddd;
         transform: translateX(-220px);
+        transition: transform 0.3s ease;
       }
-      /* Sidebar visible */
       .sidebar-visible .sidebar {
         transform: translateX(0);
       }
-      /* Main full width when sidebar hidden */
-      .sidebar-visible ~ .main {
-        margin-left: 220px;
+      /* Dim background overlay when sidebar visible */
+      .sidebar-visible::before {
+        content: "";
+        position: fixed;
+        top: 50px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 999;
       }
+      /* Main area full width without sidebar */
       .main {
-        margin-left: 0;
+        margin-left: 0 !important;
         height: calc(100vh - 50px);
         overflow: auto;
       }
@@ -241,207 +258,217 @@
 </head>
 <body>
 
-<header class="top-banner">
-  <button class="toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">☰</button>
-  <img src="logo.png" alt="TMOBILES Logo" class="logo"
-       onerror="this.style.display='none'; document.getElementById('fallback').style.display='inline-block';" />
-  <span id="fallback" class="logo-fallback">📱</span>
-  <h1>TMOBILES Store</h1>
-</header>
+  <header class="top-banner">
+    <img src="logo.png" alt="TMOBILES Logo" class="logo"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
+    <span class="logo-fallback" style="display: none;">📱 TMOBILES</span>
+    <h1>TMOBILES Store</h1>
+  </header>
 
-<div class="app sidebar-collapsed" id="app">
-  <div class="sidebar" id="sidebar">
-    <input type="file" id="excelFile" accept=".xlsx" multiple />
-    <div class="tab-section-title">Navigation</div>
-    <div id="homeTab" class="tab active" data-tab="__HOME__">🏠 Home</div>
-    <div class="tab-section-title">Sheets</div>
-    <div id="sheetTabs"></div>
+  <button class="toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar" type="button">☰</button>
+
+  <div class="app sidebar-collapsed" id="app">
+
+    <div class="sidebar" id="sidebar">
+      <input type="file" id="excelFile" accept=".xlsx" multiple />
+
+      <div class="tab-section-title">Navigation</div>
+      <div id="homeTab" class="tab active" data-tab="__HOME__">🏠 Home</div>
+
+      <div class="tab-section-title">Sheets</div>
+      <div id="sheetTabs"></div>
+    </div>
+
+    <div class="main">
+      <div class="main-header">
+        <input type="text" id="searchInput" placeholder="Search products..." />
+        <button id="resetSearchBtn">Reset Search</button>
+      </div>
+      <div class="content">
+        <table id="productTable" style="display: none;">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
-  <div class="main">
-    <div class="main-header">
-      <input type="text" id="searchInput" placeholder="Search products..." />
-      <button class="reset-btn" onclick="resetSearch()">Reset Search</button>
-    </div>
-    <div class="content">
-      <table id="productTable" style="display: none;">
-        <thead id="tableHead"></thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    const app = document.getElementById('app');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const excelFileInput = document.getElementById('excelFile');
+    const sheetTabsContainer = document.getElementById('sheetTabs');
+    const homeTab = document.getElementById('homeTab');
+    const searchInput = document.getElementById('searchInput');
+    const resetSearchBtn = document.getElementById('resetSearchBtn');
+    const productTable = document.getElementById('productTable');
+    const tableHead = document.getElementById('tableHead');
+    const tableBody = document.getElementById('tableBody');
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-  const app = document.getElementById('app');
-  const sidebarToggle = document.getElementById('sidebarToggle');
-  const homeTab = document.getElementById('homeTab');
-  const sheetTabsContainer = document.getElementById('sheetTabs');
-  const searchInput = document.getElementById('searchInput');
-  const sidebar = document.getElementById('sidebar');
+    let allSheets = {};
+    let currentData = [];
+    let activeTab = '__HOME__';
 
-  let allSheets = {};
-  let currentData = [];
-  let activeTab = "__HOME__";
-
-  // Toggle sidebar visibility
-  sidebarToggle.addEventListener('click', () => {
-    // For desktop: toggle sidebar-collapsed class on app
-    // For mobile: toggle sidebar-visible class on app
-    if(window.innerWidth <= 768) {
-      // mobile behavior
-      app.classList.toggle('sidebar-visible');
-    } else {
-      // desktop behavior
-      app.classList.toggle('sidebar-collapsed');
-    }
-  });
-
-  // Home tab click
-  homeTab.addEventListener('click', () => {
-    setActiveTab("__HOME__");
-  });
-
-  document.getElementById('excelFile').addEventListener('change', function (e) {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-
-    allSheets = {};
-    let sheetIndex = 1;
-
-    const readerPromises = files.map(file => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          const workbook = XLSX.read(event.target.result, { type: 'binary' });
-
-          workbook.SheetNames.forEach(sheetName => {
-            const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
-            let displayName = sheetName;
-            while (allSheets.hasOwnProperty(displayName)) {
-              displayName = `${sheetName} (${sheetIndex++})`;
-            }
-            allSheets[displayName] = data;
-          });
-
-          resolve();
-        };
-        reader.onerror = reject;
-        reader.readAsBinaryString(file);
-      });
-    });
-
-    Promise.all(readerPromises).then(() => {
-      generateSheetTabs(Object.keys(allSheets));
-      setActiveTab("__HOME__");
-      // Show sidebar on load for desktop/mobile
-      if(window.innerWidth <= 768) {
-        app.classList.add('sidebar-visible');
+    // Sidebar toggle click handler
+    sidebarToggle.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        // Mobile: toggle sidebar visibility
+        app.classList.toggle('sidebar-visible');
       } else {
-        app.classList.remove('sidebar-collapsed');
+        // Desktop: toggle sidebar collapse
+        app.classList.toggle('sidebar-collapsed');
       }
     });
-  });
 
-  function generateSheetTabs(tabNames) {
-    sheetTabsContainer.innerHTML = '';
-    tabNames.forEach(name => {
-      const tab = document.createElement('div');
-      tab.className = 'tab';
-      tab.textContent = name;
-      tab.dataset.tab = name;
-      tab.onclick = () => setActiveTab(name);
-      sheetTabsContainer.appendChild(tab);
-    });
-  }
-
-  function setActiveTab(name) {
-    activeTab = name;
-
-    document.querySelectorAll('.sidebar .tab').forEach(tab => {
-      tab.classList.toggle('active', tab.dataset.tab === name);
-    });
-
-    searchInput.value = '';
-
-    if (name === '__HOME__') {
-      currentData = Object.values(allSheets).flat();
-    } else {
-      currentData = allSheets[name] || [];
-    }
-
-    renderTable(currentData);
-  }
-
-  searchInput.addEventListener('input', filterAndRender);
-
-  function resetSearch() {
-    searchInput.value = '';
-    renderTable(currentData);
-  }
-
-  function filterAndRender() {
-    const query = searchInput.value.trim().toLowerCase();
-    const filtered = currentData.filter(row =>
-      Object.values(row).some(val =>
-        (val || '').toString().toLowerCase().includes(query)
-      )
-    );
-    renderTable(filtered);
-  }
-
-  function renderTable(data) {
-    const table = document.getElementById('productTable');
-    const thead = document.getElementById('tableHead');
-    const tbody = document.getElementById('tableBody');
-
-    thead.innerHTML = '';
-    tbody.innerHTML = '';
-    table.style.display = 'table';
-
-    if (data.length === 0) {
-      tbody.innerHTML = '<tr class="no-results"><td colspan="100%">No matching results</td></tr>';
-      return;
-    }
-
-    const headers = Object.keys(data[0]);
-
-    const headerRow = document.createElement('tr');
-    headers.forEach(header => {
-      const th = document.createElement('th');
-      th.textContent = header;
-      th.onclick = () => sortTableByColumn(data, header);
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-
-    data.forEach(row => {
-      const tr = document.createElement('tr');
-      headers.forEach(header => {
-        const td = document.createElement('td');
-        td.textContent = row[header] || '';
-        if (/price|cost|amount/i.test(header)) {
-          td.classList.add('price-cell');
+    // Close sidebar on mobile when clicking overlay
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        if (app.classList.contains('sidebar-visible')) {
+          // Check if click is outside sidebar and toggle button
+          if (!document.getElementById('sidebar').contains(e.target) &&
+              e.target !== sidebarToggle) {
+            app.classList.remove('sidebar-visible');
+          }
         }
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
+      }
     });
-  }
 
-  function sortTableByColumn(data, key) {
-    const sorted = [...data].sort((a, b) => {
-      const valA = (a[key] || '').toString().toLowerCase();
-      const valB = (b[key] || '').toString().toLowerCase();
-      const numA = parseFloat(valA.replace(/[^\d.-]/g, ''));
-      const numB = parseFloat(valB.replace(/[^\d.-]/g, ''));
-      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-      return valA.localeCompare(valB);
+    // Home tab click
+    homeTab.addEventListener('click', () => {
+      setActiveTab('__HOME__');
+      if (window.innerWidth <= 768) app.classList.remove('sidebar-visible'); // close sidebar on mobile
     });
-    renderTable(sorted);
-  }
-</script>
+
+    // File upload handler
+    excelFileInput.addEventListener('change', function (e) {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      allSheets = {};
+      let sheetIndex = 1;
+
+      const readerPromises = files.map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const workbook = XLSX.read(event.target.result, { type: 'binary' });
+            workbook.SheetNames.forEach(sheetName => {
+              const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+              let displayName = sheetName;
+              while (allSheets.hasOwnProperty(displayName)) {
+                displayName = `${sheetName} (${sheetIndex++})`;
+              }
+              allSheets[displayName] = data;
+            });
+            resolve();
+          };
+          reader.onerror = reject;
+          reader.readAsBinaryString(file);
+        });
+      });
+
+      Promise.all(readerPromises).then(() => {
+        generateSheetTabs(Object.keys(allSheets));
+        setActiveTab('__HOME__');
+      });
+    });
+
+    function generateSheetTabs(tabNames) {
+      sheetTabsContainer.innerHTML = '';
+      tabNames.forEach(name => {
+        const tab = document.createElement('div');
+        tab.className = 'tab';
+        tab.textContent = name;
+        tab.dataset.tab = name;
+        tab.onclick = () => {
+          setActiveTab(name);
+          if (window.innerWidth <= 768) app.classList.remove('sidebar-visible'); // close sidebar on mobile
+        };
+        sheetTabsContainer.appendChild(tab);
+      });
+    }
+
+    function setActiveTab(name) {
+      activeTab = name;
+
+      document.querySelectorAll('.sidebar .tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === name);
+      });
+
+      searchInput.value = '';
+
+      if (name === '__HOME__') {
+        currentData = Object.values(allSheets).flat();
+      } else {
+        currentData = allSheets[name] || [];
+      }
+
+      renderTable(currentData);
+    }
+
+    searchInput.addEventListener('input', filterAndRender);
+
+    resetSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      renderTable(currentData);
+    });
+
+    function filterAndRender() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        renderTable(currentData);
+        return;
+      }
+      const filtered = currentData.filter(row => {
+        return Object.values(row).some(cell =>
+          String(cell).toLowerCase().includes(query)
+        );
+      });
+      renderTable(filtered);
+    }
+
+    function renderTable(data) {
+      if (!data || data.length === 0) {
+        productTable.style.display = 'none';
+        return;
+      }
+      productTable.style.display = 'table';
+
+      // Generate header
+      const columns = Object.keys(data[0]);
+      tableHead.innerHTML = '';
+      const headerRow = document.createElement('tr');
+      columns.forEach(col => {
+        const th = document.createElement('th');
+        th.textContent = col;
+        headerRow.appendChild(th);
+      });
+      tableHead.appendChild(headerRow);
+
+      // Generate body
+      tableBody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        columns.forEach(col => {
+          const td = document.createElement('td');
+          td.textContent = row[col];
+
+          // Color price column green if present
+          if (/price/i.test(col)) {
+            td.classList.add('price-cell');
+          }
+
+          tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // Initial: show home tab with no data
+    setActiveTab('__HOME__');
+  </script>
 
 </body>
 </html>
