@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Product Catalog - Multi Excel View</title>
+  <title>TMOBILES Store - Product Catalog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     html, body {
@@ -11,9 +11,30 @@
       font-family: Arial, sans-serif;
     }
 
+    .top-banner {
+      display: flex;
+      align-items: center;
+      background-color: #E20074; /* Magenta */
+      color: white;
+      border-bottom: 1px solid #ccc;
+      padding: 10px 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .top-banner .logo {
+      height: 40px;
+      margin-right: 15px;
+    }
+
+    .top-banner h1 {
+      font-size: 24px;
+      margin: 0;
+      color: white;
+    }
+
     .app {
       display: flex;
-      height: 100vh;
+      height: calc(100vh - 62px); /* account for banner */
       overflow: hidden;
     }
 
@@ -72,7 +93,8 @@
       border-bottom: 1px solid #ddd;
     }
 
-    .main-header input[type="text"], .main-header button {
+    .main-header input[type="text"],
+    .main-header button {
       width: 100%;
       margin-bottom: 10px;
       padding: 10px;
@@ -118,6 +140,11 @@
 </head>
 <body>
 
+<header class="top-banner">
+  <img src="logo.png" alt="TMOBILES Logo" class="logo">
+  <h1>TMOBILES Store</h1>
+</header>
+
 <div class="app">
   <div class="sidebar">
     <input type="file" id="excelFile" accept=".xlsx" multiple />
@@ -149,7 +176,6 @@
   let currentData = [];
   let activeTab = "__HOME__";
 
-  // Setup home tab click
   document.getElementById("homeTab").addEventListener("click", () => {
     setActiveTab("__HOME__");
   });
